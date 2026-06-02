@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:camera/camera.dart';
 import '../controllers/dms_controller.dart';
+import '../models/dms_result.dart'; 
 import 'widgets/alert_banner.dart';
 import 'widgets/metrics_panel.dart';
 
@@ -16,7 +17,7 @@ class MonitorView extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Camera Preview
+          // 1. Capa de fondo: Previsualización de la cámara
           Obx(() {
             if (controller.cameraError.value.isNotEmpty) {
               return Center(
@@ -36,14 +37,90 @@ class MonitorView extends StatelessWidget {
             return CameraPreview(controller.cameraController!);
           }),
           
-          // Metrics UI Overlay
+          // 2. Capa superior izquierda: Panel de métricas (EAR / MAR)
           Positioned(
             top: 50,
             left: 20,
             child: const MetricsPanel(),
           ),
           
-          // Alert Banner Overlay
+          // 3. Capa Dinámica: Slider inteligente para deslindar/apagar la alarma
+          Obx(() {
+            if (controller.isAlarmPlaying.value) {
+              return Positioned(
+                bottom: 140, // Flota arriba del banner de alertas para no tapar nada
+                left: 20,
+                right: 20,
+                child: Dismissible(
+                  key: UniqueKey(),
+                  direction: DismissDirection.startToEnd, // Deslizar solo de izquierda a derecha
+                  onDismissed: (direction) {
+                    controller.stopAlarma(); // Apaga el audio y resetea el estado para la IA
+                  },
+                  // Fondo verde que se descubre al deslizar
+                  background: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.greenAccent.shade700.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Icon(Icons.check, color: Colors.white, size: 28),
+                    ),
+                  ),
+                  // El botón rojo que se arrastra
+                  child: Container(
+                    width: double.infinity,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        )
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 5),
+                        // Círculo blanco con la flecha para arrastrar (CORREGIDO AQUÍ)
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.arrow_forward, color: Colors.redAccent, size: 26),
+                        ),
+                        const Expanded(
+                          child: Text(
+                            "DESLIZAR PARA APAGAR",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 55), // Balancea el diseño por el círculo inicial
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            } else {
+              return const SizedBox.shrink();
+            }
+          }),
+          
+          // 4. Capa inferior: Banner de alertas (Fatiga, Distracción, Normal)
           Positioned(
             bottom: 50,
             left: 20,
@@ -51,7 +128,7 @@ class MonitorView extends StatelessWidget {
             child: const AlertBanner(),
           ),
           
-          // Back Button
+          // 5. Capa superior derecha: Botón flotante para salir/volver atrás
           Positioned(
             top: 40,
             right: 20,

@@ -1,21 +1,21 @@
 import 'dart:io';
-
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import '../models/dms_result.dart';
 import '../services/dms_engine.dart';
 
-/// Controls the camera and DMS engine — all processing happens on-device.
-/// No WebSocket, no server, no IP address needed.
 class DmsController extends GetxController {
   CameraController? cameraController;
   CameraDescription? _camera;
   final RxBool isCameraReady = false.obs;
   final RxString cameraError = ''.obs;
 
-  /// The latest DMS analysis result, observed by the UI widgets.
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  final RxBool isAlarmPlaying = false.obs;
+
   final Rx<DmsResult> currentResult = DmsResult.normal().obs;
 
   late final DmsEngine _dmsEngine;
@@ -46,7 +46,6 @@ class DmsController extends GetxController {
         _camera!,
         ResolutionPreset.low,
         enableAudio: false,
-        // ML Kit expects NV21 on Android, BGRA8888 on iOS
         imageFormatGroup: Platform.isAndroid
             ? ImageFormatGroup.nv21
             : ImageFormatGroup.bgra8888,
@@ -68,7 +67,6 @@ class DmsController extends GetxController {
     if (_isProcessingFrame) return;
 
     _frameCount++;
-    // Process 1 frame out of 3 for good balance between responsiveness and CPU usage
     if (_frameCount % 3 != 0) return;
 
     _isProcessingFrame = true;
@@ -83,7 +81,22 @@ class DmsController extends GetxController {
       if (inputImage == null) return;
 
       final result = await _dmsEngine.processFrame(inputImage);
-      currentResult.value = result;
+      
+      // Si la alarma NO está sonando, actualizamos la pantalla con lo que diga la IA
+      if (!isAlarmPlaying.value) {
+        currentResult.value = result;
+
+        // Pasamos el texto a minúsculas para evitar problemas de mayúsculas
+        String statusLower = result.status.toLowerCase().trim();
+        
+        // 🔥 AQUÍ AGREGAMOS "dormido" QUE ES LO QUE TU IA DETECTA REALMENTE
+        if (statusLower.contains("fatiga") || 
+            statusLower.contains("somnolencia") || 
+            statusLower.contains("dormido") || 
+            statusLower.contains("drowsy")) {
+          playAlarma();
+        }
+      }
     } catch (e) {
       debugPrint("Frame processing error: $e");
     }
@@ -93,6 +106,32 @@ class DmsController extends GetxController {
   void onClose() {
     cameraController?.dispose();
     _dmsEngine.dispose();
+    _audioPlayer.dispose();
     super.onClose();
+  }
+
+void playAlarma() async {
+    if (!isAlarmPlaying.value) {
+      isAlarmPlaying.value = true;
+      try {
+        await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+        await _audioPlayer.play(AssetSource('alarma.wav')); 
+      } catch (e) {
+        print("Error al reproducir audio: $e");
+        try {
+          await _audioPlayer.play(AssetSource('assets/alarma.wav'));
+        } catch (_) {}
+      }
+    }
+  }
+  void stopAlarma() async {
+    if (isAlarmPlaying.value) {
+      await _audioPlayer.stop();
+      isAlarmPlaying.value = false;
+      
+      // Reseteamos el estado a normal para que la IA pueda volver a evaluar tus ojos de nuevo
+      currentResult.value = DmsResult.normal();
+      currentResult.refresh();
+    }
   }
 }
