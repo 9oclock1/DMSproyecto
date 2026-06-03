@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pro_mov/app/views/dms_menu_view.dart';
-import 'app/views/start_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

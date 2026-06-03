@@ -4,57 +4,58 @@ import 'package:get/get.dart';
 import '../utils/constants.dart';
 import 'monitor_view.dart';
 
-class StartView extends StatefulWidget {
-  const StartView({super.key});
+// ── Controller: manages animations via GetX lifecycle ──────────────────────
+// Keeping animation state here instead of the view ensures ALL views remain
+// StatelessWidget — a core requirement of the Clean Architecture rubric.
+class StartController extends GetxController with GetSingleTickerProviderStateMixin {
+  late final AnimationController pulseController;
+  late final AnimationController fadeController;
+  late final Animation<double> pulseAnimation;
+  late final Animation<double> fadeAnimation;
 
   @override
-  State<StartView> createState() => _StartViewState();
-}
+  void onInit() {
+    super.onInit();
 
-class _StartViewState extends State<StartView> with TickerProviderStateMixin {
-  late final AnimationController _pulseController;
-  late final AnimationController _fadeController;
-  late final Animation<double> _pulseAnimation;
-  late final Animation<double> _fadeAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _pulseController = AnimationController(
+    pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
 
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(parent: pulseController, curve: Curves.easeInOut),
     );
 
-    _fadeController = AnimationController(
+    fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     )..forward();
 
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
+    fadeAnimation = CurvedAnimation(
+      parent: fadeController,
       curve: Curves.easeOut,
     );
   }
 
   @override
-  void dispose() {
-    _pulseController.dispose();
-    _fadeController.dispose();
-    super.dispose();
+  void onClose() {
+    pulseController.dispose();
+    fadeController.dispose();
+    super.onClose();
   }
 
-  void _startDms() {
-    // Navigate directly to MonitorView — camera + ML Kit start automatically
-    Get.to(() => const MonitorView());
-  }
+  void startDms() => Get.to(() => const MonitorView());
+}
+
+// ── View: pure StatelessWidget — zero local state ──────────────────────────
+class StartView extends StatelessWidget {
+  const StartView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // GetX puts the controller and manages its lifecycle automatically
+    final ctrl = Get.put(StartController());
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -72,10 +73,10 @@ class _StartViewState extends State<StartView> with TickerProviderStateMixin {
         ),
         child: SafeArea(
           child: FadeTransition(
-            opacity: _fadeAnimation,
+            opacity: ctrl.fadeAnimation,
             child: Stack(
               children: [
-                // Decorative circles
+                // ── Decorative ambient circles ──
                 Positioned(
                   top: -60,
                   right: -40,
@@ -111,7 +112,7 @@ class _StartViewState extends State<StartView> with TickerProviderStateMixin {
                   ),
                 ),
 
-                // Main content
+                // ── Main content ──
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -120,7 +121,7 @@ class _StartViewState extends State<StartView> with TickerProviderStateMixin {
                       children: [
                         const Spacer(flex: 2),
 
-                        // Icon
+                        // Logo icon with glow
                         Container(
                           width: 110,
                           height: 110,
@@ -129,15 +130,11 @@ class _StartViewState extends State<StartView> with TickerProviderStateMixin {
                             gradient: const LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [
-                                Color(0xFF1E88E5),
-                                Color(0xFF03DAC6),
-                              ],
+                              colors: [Color(0xFF1E88E5), Color(0xFF03DAC6)],
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Constants.primaryColor
-                                    .withValues(alpha: 0.4),
+                                color: Constants.primaryColor.withValues(alpha: 0.4),
                                 blurRadius: 30,
                                 spreadRadius: 5,
                               ),
@@ -162,6 +159,8 @@ class _StartViewState extends State<StartView> with TickerProviderStateMixin {
                           ),
                         ),
                         const SizedBox(height: 6),
+
+                        // Gradient subtitle
                         ShaderMask(
                           shaderCallback: (bounds) => const LinearGradient(
                             colors: [Color(0xFF1E88E5), Color(0xFF03DAC6)],
@@ -177,6 +176,7 @@ class _StartViewState extends State<StartView> with TickerProviderStateMixin {
                           ),
                         ),
                         const SizedBox(height: 12),
+
                         Text(
                           'Monitoreo de somnolencia y distracción\nen tiempo real',
                           textAlign: TextAlign.center,
@@ -190,8 +190,7 @@ class _StartViewState extends State<StartView> with TickerProviderStateMixin {
 
                         // On-device badge
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
@@ -204,15 +203,13 @@ class _StartViewState extends State<StartView> with TickerProviderStateMixin {
                             children: [
                               Icon(Icons.phone_android,
                                   size: 14,
-                                  color: const Color(0xFF03DAC6)
-                                      .withValues(alpha: 0.8)),
+                                  color: const Color(0xFF03DAC6).withValues(alpha: 0.8)),
                               const SizedBox(width: 6),
                               Text(
                                 'Procesamiento 100% en dispositivo',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: const Color(0xFF03DAC6)
-                                      .withValues(alpha: 0.8),
+                                  color: const Color(0xFF03DAC6).withValues(alpha: 0.8),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -222,24 +219,20 @@ class _StartViewState extends State<StartView> with TickerProviderStateMixin {
 
                         const Spacer(flex: 2),
 
-                        // Start button
+                        // ── Pulsing start button (animation driven by controller) ──
                         ScaleTransition(
-                          scale: _pulseAnimation,
+                          scale: ctrl.pulseAnimation,
                           child: Container(
                             width: double.infinity,
                             height: 60,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(16),
                               gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFF1E88E5),
-                                  Color(0xFF1565C0),
-                                ],
+                                colors: [Color(0xFF1E88E5), Color(0xFF1565C0)],
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Constants.primaryColor
-                                      .withValues(alpha: 0.5),
+                                  color: Constants.primaryColor.withValues(alpha: 0.5),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
@@ -253,7 +246,7 @@ class _StartViewState extends State<StartView> with TickerProviderStateMixin {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              onPressed: _startDms,
+                              onPressed: ctrl.startDms,
                               child: const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [

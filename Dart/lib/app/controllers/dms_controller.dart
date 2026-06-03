@@ -26,7 +26,8 @@ class DmsController extends GetxController {
   void onInit() {
     super.onInit();
     _dmsEngine = DmsEngine();
-    _initCamera();
+    // Initialise the custom TFLite model FIRST, then start the camera
+    _dmsEngine.init().then((_) => _initCamera());
   }
 
   Future<void> _initCamera() async {
@@ -86,14 +87,14 @@ class DmsController extends GetxController {
       if (!isAlarmPlaying.value) {
         currentResult.value = result;
 
-        // Pasamos el texto a minúsculas para evitar problemas de mayúsculas
-        String statusLower = result.status.toLowerCase().trim();
-        
-        // 🔥 AQUÍ AGREGAMOS "dormido" QUE ES LO QUE TU IA DETECTA REALMENTE
-        if (statusLower.contains("fatiga") || 
-            statusLower.contains("somnolencia") || 
-            statusLower.contains("dormido") || 
-            statusLower.contains("drowsy")) {
+        // Alarm when the engine reports critical events:
+        // - Drowsiness (eyes closed > 1.3s)
+        // - Smoking detected
+        // - Phone distraction
+        final statusLower = result.status.toLowerCase();
+        if (statusLower.contains('dormido') ||
+            statusLower.contains('fumando') ||
+            statusLower.contains('telefono')) {
           playAlarma();
         }
       }

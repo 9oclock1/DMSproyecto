@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:camera/camera.dart';
 import '../controllers/dms_controller.dart';
-import '../models/dms_result.dart'; 
 import 'widgets/alert_banner.dart';
 import 'widgets/metrics_panel.dart';
 

@@ -29,6 +29,8 @@ class MetricsPanel extends StatelessWidget {
             const SizedBox(height: 4),
             _buildMetricRow(
                 "Pitch (Cabeza):", result.pitch.toStringAsFixed(1)),
+            const SizedBox(height: 4),
+            _buildSeatbeltRow(result.seatbeltDetected),
             if (result.objectDetection != null) ...[
               const SizedBox(height: 8),
               _buildMetricRow("Obj:", result.objectDetection!, isAlert: true),
@@ -53,6 +55,33 @@ class MetricsPanel extends StatelessWidget {
           style: TextStyle(
             color: isAlert ? Colors.orangeAccent : Colors.white,
             fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSeatbeltRow(bool detected) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          detected ? Icons.lock : Icons.lock_open,
+          size: 16,
+          color: detected ? Colors.greenAccent : Colors.orangeAccent,
+        ),
+        const SizedBox(width: 6),
+        const Text(
+          'Cinturón:',
+          style: TextStyle(color: Colors.white70, fontSize: 14),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          detected ? 'OK' : 'NO DETECTADO',
+          style: TextStyle(
+            color: detected ? Colors.greenAccent : Colors.orangeAccent,
+            fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
         ),

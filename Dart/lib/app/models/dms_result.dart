@@ -8,7 +8,8 @@ class DmsResult {
   final double eyeOpenProbability; // replaces EAR (0.0 = closed, 1.0 = open)
   final double mar; // Mouth Aspect Ratio
   final double pitch; // Head pitch angle in degrees
-  final String? objectDetection; // detected object (e.g., "Celular", "Bebida")
+  final String? objectDetection; // detected distraction label (e.g., "cell phone")
+  final bool seatbeltDetected;   // false = no seatbelt visible
 
   const DmsResult({
     required this.status,
@@ -17,6 +18,7 @@ class DmsResult {
     required this.mar,
     required this.pitch,
     this.objectDetection,
+    this.seatbeltDetected = true, // assume OK until detected otherwise
   });
 
   /// Default "driving normally" state.
@@ -26,5 +28,6 @@ class DmsResult {
         eyeOpenProbability: 1.0,
         mar: 0.0,
         pitch: 0.0,
+        seatbeltDetected: true,
       );
 }

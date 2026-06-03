@@ -1,24 +1,36 @@
 import 'dart:io';
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 import '../models/dms_result.dart';
 
+// ── Custom TFLite model asset name ──
+const String _kModelAsset = 'assets/models/best_float16.tflite';
+
 class DmsEngine {
   late final FaceDetector _faceDetector;
-  late final ObjectDetector _objectDetector;
+  ObjectDetector? _objectDetector;
 
   // ── Timing state (mirrors server.py logic) ──
   double _tiempoOjosCerrados = 0;
   double _tiempoBostezo = 0;
   double _tiempoCabeceo = 0;
+  double _tiempoFumando = 0;     // smoking timer
+  double _tiempoComiendo = 0;    // eating/drinking timer
+  double _tiempoTelefono = 0;    // phone timer
   int _frameCount = 0;
   String? _alertaObjActual;
+  // Seatbelt: we track whether belt was seen in recent frames
+  bool _cinturonVisto = false;
+  int _framesSinCinturon = 0;    // consecutive detection-frames without seatbelt
+  static const int _maxFramesSinCinturon = 30; // ~3 s at 10 fps obj detection
 
   // ── Thresholds (matching server.py) ──
   /// Eye-open probability below this → eyes considered closed.
@@ -39,6 +51,28 @@ class DmsEngine {
   static const _colorDanger = Color(0xFFE53935);
   static const _colorWarning = Color(0xFFFB8C00);
 
+  // ── Class labels that best_float16.tflite detects ──
+  // Tier 1 – Phone/device distraction (critical)
+  static const _phoneLabels = {
+    'cell phone', 'phone', 'mobile phone', 'celular',
+    'laptop', 'tablet',
+  };
+  // Tier 2 – Smoking (critical)
+  static const _smokingLabels = {
+    'cigarette', 'cigar', 'smoking', 'cigarro', 'vape', 'e-cigarette',
+  };
+  // Tier 3 – Eating or drinking (warning)
+  static const _foodLabels = {
+    'cup', 'bottle', 'wine glass', 'fork', 'knife',
+    'spoon', 'bowl', 'food', 'bebida', 'sandwich',
+    'pizza', 'hamburger', 'hot dog', 'donut', 'cake',
+    'apple', 'orange', 'banana', 'carrot', 'broccoli',
+  };
+  // Tier 4 – Seatbelt present (we alert when NOT seen)
+  static const _seatbeltLabels = {
+    'seatbelt', 'seat belt', 'cinturon', 'cinturón', 'belt',
+  };
+
   DmsEngine() {
     _faceDetector = FaceDetector(
       options: FaceDetectorOptions(
@@ -47,14 +81,46 @@ class DmsEngine {
         performanceMode: FaceDetectorMode.fast,
       ),
     );
+    // ObjectDetector is initialized asynchronously via init()
+  }
 
+  /// Must be called once before processing frames.
+  /// Extracts the bundled .tflite asset to the device filesystem and
+  /// initialises the custom object detector.
+  Future<void> init() async {
+    final modelPath = await _extractModelAsset();
     _objectDetector = ObjectDetector(
-      options: ObjectDetectorOptions(
+      options: LocalObjectDetectorOptions(
+        modelPath: modelPath,
         mode: DetectionMode.stream,
         classifyObjects: true,
         multipleObjects: true,
+        maximumLabelsPerObject: 3,
+        confidenceThreshold: 0.5,
       ),
     );
+    debugPrint('[DmsEngine] Custom model loaded from: $modelPath');
+  }
+
+  /// Copies the .tflite Flutter asset to the device's documents directory
+  /// so ML Kit can open it as a regular file.
+  Future<String> _extractModelAsset() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final modelFile = File(p.join(dir.path, 'best_float16.tflite'));
+
+    if (!await modelFile.exists()) {
+      final byteData = await rootBundle.load(_kModelAsset);
+      await modelFile.writeAsBytes(
+        byteData.buffer.asUint8List(
+          byteData.offsetInBytes,
+          byteData.lengthInBytes,
+        ),
+      );
+      debugPrint('[DmsEngine] Model extracted to ${modelFile.path}');
+    } else {
+      debugPrint('[DmsEngine] Model already exists at ${modelFile.path}');
+    }
+    return modelFile.path;
   }
 
   // ═══════════════════════════════════════════════════════
@@ -108,26 +174,73 @@ class DmsEngine {
 
     // ── Object detection (every N frames) ──
     String? objectDetection;
-    if (_frameCount % _saltoFramesObj == 0) {
+    bool seatbeltDetected = true; // optimistic default
+
+    if (_frameCount % _saltoFramesObj == 0 && _objectDetector != null) {
       try {
-        final objects = await _objectDetector.processImage(inputImage);
+        final objects = await _objectDetector!.processImage(inputImage);
+
+        // Reset object alert and seatbelt state for this detection pass
         _alertaObjActual = null;
+        bool beltSeenThisFrame = false;
 
         for (final obj in objects) {
           for (final label in obj.labels) {
-            // ML Kit base model categories:
-            //   "Fashion good", "Food", "Home good", "Place", "Plant"
-            // Mapping: "Home good" → potential phone, "Food" → potential drink.
-            // NOTE: For more precise detection (specific "cell phone", "bottle"),
-            //       replace the base model with a custom TFLite model.
-            if (label.text == 'Home good' && label.confidence > 0.6) {
-              _alertaObjActual = '!!! ALERTA: DISTRACCION POR OBJETO !!!';
-              objectDetection = 'Objeto';
-            } else if (label.text == 'Food' && label.confidence > 0.6) {
-              _alertaObjActual = 'WARN: Consumiendo Bebida/Alimento';
-              objectDetection = 'Bebida';
+            final labelLower = label.text.toLowerCase().trim();
+
+            // ── Seatbelt check ──
+            if (_seatbeltLabels.contains(labelLower)) {
+              beltSeenThisFrame = true;
+              _cinturonVisto = true;
+              _framesSinCinturon = 0;
+            }
+
+            // ── Phone / device ──
+            if (_phoneLabels.contains(labelLower)) {
+              final now = _nowSeconds();
+              if (_tiempoTelefono == 0) _tiempoTelefono = now;
+              if (now - _tiempoTelefono > 0.8) {
+                _alertaObjActual = '!!! ALERTA: DISTRACCION CON TELEFONO !!!';
+                objectDetection = label.text;
+              }
+            } else if (!_phoneLabels.contains(labelLower)) {
+              _tiempoTelefono = 0;
+            }
+
+            // ── Smoking ──
+            if (_smokingLabels.contains(labelLower) && _alertaObjActual == null) {
+              final now = _nowSeconds();
+              if (_tiempoFumando == 0) _tiempoFumando = now;
+              if (now - _tiempoFumando > 1.0) {
+                _alertaObjActual = '!!! ALERTA: CONDUCTOR FUMANDO !!!';
+                objectDetection = label.text;
+              }
+            } else if (!_smokingLabels.contains(labelLower)) {
+              _tiempoFumando = 0;
+            }
+
+            // ── Eating / drinking ──
+            if (_foodLabels.contains(labelLower) && _alertaObjActual == null) {
+              final now = _nowSeconds();
+              if (_tiempoComiendo == 0) _tiempoComiendo = now;
+              if (now - _tiempoComiendo > 1.5) {
+                _alertaObjActual = 'WARN: Conductor Comiendo/Bebiendo';
+                objectDetection = label.text;
+              }
+            } else if (!_foodLabels.contains(labelLower)) {
+              _tiempoComiendo = 0;
             }
           }
+        }
+
+        // ── Seatbelt absence tracking ──
+        // Only start counting missing frames once we've confirmed the belt was
+        // visible at least once (avoids false alarm at startup).
+        if (_cinturonVisto && !beltSeenThisFrame) {
+          _framesSinCinturon++;
+        }
+        if (_framesSinCinturon >= _maxFramesSinCinturon) {
+          seatbeltDetected = false;
         }
       } catch (e) {
         debugPrint('Object detection error: $e');
@@ -196,12 +309,19 @@ class DmsEngine {
       debugPrint('Face detection error: $e');
     }
 
-    // ── Priority: biometric alerts > object alerts > normal ──
+    // ── Priority: drowsy > nodding > smoking > phone > eating > seatbelt > yawn > normal ──
     if (alertaBiometrica != null) {
       estadoAlerta = alertaBiometrica;
       colorAlerta = colorBiometrica!;
     } else if (_alertaObjActual != null) {
       estadoAlerta = _alertaObjActual!;
+      // Smoking and phone = danger; eating = warning
+      colorAlerta = (_alertaObjActual!.contains('FUMANDO') ||
+              _alertaObjActual!.contains('TELEFONO'))
+          ? _colorDanger
+          : _colorWarning;
+    } else if (!seatbeltDetected) {
+      estadoAlerta = '⚠ CINTURON DE SEGURIDAD NO DETECTADO';
       colorAlerta = _colorWarning;
     }
 
@@ -212,6 +332,7 @@ class DmsEngine {
       mar: mar,
       pitch: pitch,
       objectDetection: objectDetection,
+      seatbeltDetected: seatbeltDetected,
     );
   }
 
@@ -255,6 +376,6 @@ class DmsEngine {
   /// Release ML Kit resources.
   void dispose() {
     _faceDetector.close();
-    _objectDetector.close();
+    _objectDetector?.close();
   }
 }
