@@ -32,9 +32,25 @@ class MonitorView extends StatelessWidget {
               );
             }
             if (!controller.isCameraReady.value || controller.cameraController == null) {
-              return const Center(child: CircularProgressIndicator(color: Colors.white));
+              return const Center(child: CircularProgressIndicator(color: Colors.cyanAccent));
             }
             return CameraPreview(controller.cameraController!);
+          }),
+          
+          // 🔥 DETALLE PREMIUM 1: Marco Cyberpunk dinámico sobre la cámara
+          Obx(() {
+            return Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: controller.isAlarmPlaying.value 
+                        ? Colors.redAccent.withOpacity(0.6) // Parpadeo rojo en emergencia
+                        : Colors.cyanAccent.withOpacity(0.15), // Brillo sutil normal
+                    width: controller.isAlarmPlaying.value ? 6 : 3,
+                  ),
+                ),
+              ),
+            );
           }),
           
           // 2. Capa superior izquierda: Panel de métricas (EAR / MAR)
@@ -44,20 +60,55 @@ class MonitorView extends StatelessWidget {
             child: const MetricsPanel(),
           ),
           
+          // 🔥 DETALLE PREMIUM 2: Indicador "IA ACTIVA" arriba a la derecha (Estilo Tesla)
+          Positioned(
+            top: 55,
+            right: 70, // Espacio para que no choque con el botón de cerrar
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: Colors.redAccent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    "IA ACTIVA",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
           // 3. Capa Dinámica: Slider inteligente para deslindar/apagar la alarma
           Obx(() {
             if (controller.isAlarmPlaying.value) {
               return Positioned(
-                bottom: 140, // Flota arriba del banner de alertas para no tapar nada
+                bottom: 140, 
                 left: 20,
                 right: 20,
                 child: Dismissible(
                   key: UniqueKey(),
-                  direction: DismissDirection.startToEnd, // Deslizar solo de izquierda a derecha
+                  direction: DismissDirection.startToEnd, 
                   onDismissed: (direction) {
-                    controller.stopAlarma(); // Apaga el audio y resetea el estado para la IA
+                    controller.stopAlarma(); 
                   },
-                  // Fondo verde que se descubre al deslizar
                   background: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
@@ -69,7 +120,6 @@ class MonitorView extends StatelessWidget {
                       child: Icon(Icons.check, color: Colors.white, size: 28),
                     ),
                   ),
-                  // El botón rojo que se arrastra
                   child: Container(
                     width: double.infinity,
                     height: 60,
@@ -87,7 +137,6 @@ class MonitorView extends StatelessWidget {
                     child: Row(
                       children: [
                         const SizedBox(width: 5),
-                        // Círculo blanco con la flecha para arrastrar (CORREGIDO AQUÍ)
                         Container(
                           width: 50,
                           height: 50,
@@ -109,7 +158,7 @@ class MonitorView extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 55), // Balancea el diseño por el círculo inicial
+                        const SizedBox(width: 55), 
                       ],
                     ),
                   ),
@@ -128,13 +177,19 @@ class MonitorView extends StatelessWidget {
             child: const AlertBanner(),
           ),
           
-          // 5. Capa superior derecha: Botón flotante para salir/volver atrás
+          // 5. Capa superior derecha: Botón flotante para salir/volver atrás (Estilizado)
           Positioned(
-            top: 40,
+            top: 45,
             right: 20,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white, size: 30),
-              onPressed: () => Get.back(),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.black38,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 26),
+                onPressed: () => Get.back(),
+              ),
             ),
           )
         ],
