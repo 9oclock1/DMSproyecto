@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'monitor_view.dart';
 
-class DmsMenuView extends StatelessWidget {
+class DmsMenuView extends ConsumerWidget {
   const DmsMenuView({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Colores premium para el diseño automotriz (Dark Mode)
     const primaryColor = Color(0xFF1E1E2E);
     const accentColor = Colors.cyanAccent;
@@ -62,7 +62,9 @@ class DmsMenuView extends StatelessWidget {
 
               // 2. Botón Principal: INICIAR ESCANEO
               GestureDetector(
-                onTap: () => Get.to(() => const MonitorView()),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const MonitorView()),
+                ),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),

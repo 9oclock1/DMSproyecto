@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pro_mov/app/views/dms_menu_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const DmsApp());
+  runApp(const ProviderScope(child: DmsApp()));
 }
 
 class DmsApp extends StatelessWidget {
@@ -12,7 +12,7 @@ class DmsApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
+    return MaterialApp(
       title: 'DMS Híbrido',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(

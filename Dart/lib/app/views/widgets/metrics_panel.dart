@@ -1,44 +1,41 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../controllers/dms_controller.dart';
+import '../../providers/providers.dart';
 
-class MetricsPanel extends StatelessWidget {
+class MetricsPanel extends ConsumerWidget {
   const MetricsPanel({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final DmsController controller = Get.find<DmsController>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = ref.watch(dmsControllerProvider);
+    final result = controller.currentResult;
 
-    return Obx(() {
-      final result = controller.currentResult.value;
-
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.black54,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildMetricRow(
-                "Ojos (prob.):", result.eyeOpenProbability.toStringAsFixed(2)),
-            const SizedBox(height: 4),
-            _buildMetricRow("MAR (Boca):", result.mar.toStringAsFixed(3)),
-            const SizedBox(height: 4),
-            _buildMetricRow(
-                "Pitch (Cabeza):", result.pitch.toStringAsFixed(1)),
-            const SizedBox(height: 4),
-            _buildSeatbeltRow(result.seatbeltDetected),
-            if (result.objectDetection != null) ...[
-              const SizedBox(height: 8),
-              _buildMetricRow("Obj:", result.objectDetection!, isAlert: true),
-            ]
-          ],
-        ),
-      );
-    });
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.black54,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildMetricRow(
+              "Ojos (prob.):", result.eyeOpenProbability.toStringAsFixed(2)),
+          const SizedBox(height: 4),
+          _buildMetricRow("MAR (Boca):", result.mar.toStringAsFixed(3)),
+          const SizedBox(height: 4),
+          _buildMetricRow(
+              "Pitch (Cabeza):", result.pitch.toStringAsFixed(1)),
+          const SizedBox(height: 4),
+          _buildSeatbeltRow(result.seatbeltDetected),
+          if (result.objectDetection != null) ...[
+            const SizedBox(height: 8),
+            _buildMetricRow("Obj:", result.objectDetection!, isAlert: true),
+          ]
+        ],
+      ),
+    );
   }
 
   Widget _buildMetricRow(String label, String value, {bool isAlert = false}) {

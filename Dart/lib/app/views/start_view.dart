@@ -1,21 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../utils/constants.dart';
 import 'monitor_view.dart';
 
-// ── Controller: manages animations via GetX lifecycle ──────────────────────
-// Keeping animation state here instead of the view ensures ALL views remain
-// StatelessWidget — a core requirement of the Clean Architecture rubric.
-class StartController extends GetxController with GetSingleTickerProviderStateMixin {
+// ── View: ConsumerStatefulWidget — animations live in State ─────────────────
+class StartView extends ConsumerStatefulWidget {
+  const StartView({super.key});
+
+  @override
+  ConsumerState<StartView> createState() => _StartViewState();
+}
+
+class _StartViewState extends ConsumerState<StartView>
+    with TickerProviderStateMixin {
   late final AnimationController pulseController;
   late final AnimationController fadeController;
   late final Animation<double> pulseAnimation;
   late final Animation<double> fadeAnimation;
 
   @override
-  void onInit() {
-    super.onInit();
+  void initState() {
+    super.initState();
 
     pulseController = AnimationController(
       vsync: this,
@@ -38,24 +44,20 @@ class StartController extends GetxController with GetSingleTickerProviderStateMi
   }
 
   @override
-  void onClose() {
+  void dispose() {
     pulseController.dispose();
     fadeController.dispose();
-    super.onClose();
+    super.dispose();
   }
 
-  void startDms() => Get.to(() => const MonitorView());
-}
-
-// ── View: pure StatelessWidget — zero local state ──────────────────────────
-class StartView extends StatelessWidget {
-  const StartView({super.key});
+  void _startDms() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const MonitorView()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    // GetX puts the controller and manages its lifecycle automatically
-    final ctrl = Get.put(StartController());
-
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -73,7 +75,7 @@ class StartView extends StatelessWidget {
         ),
         child: SafeArea(
           child: FadeTransition(
-            opacity: ctrl.fadeAnimation,
+            opacity: fadeAnimation,
             child: Stack(
               children: [
                 // ── Decorative ambient circles ──
@@ -219,9 +221,9 @@ class StartView extends StatelessWidget {
 
                         const Spacer(flex: 2),
 
-                        // ── Pulsing start button (animation driven by controller) ──
+                        // ── Pulsing start button (animation driven by State) ──
                         ScaleTransition(
-                          scale: ctrl.pulseAnimation,
+                          scale: pulseAnimation,
                           child: Container(
                             width: double.infinity,
                             height: 60,
@@ -246,7 +248,7 @@ class StartView extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              onPressed: ctrl.startDms,
+                              onPressed: _startDms,
                               child: const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [

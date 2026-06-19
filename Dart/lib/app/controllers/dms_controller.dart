@@ -1,30 +1,27 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 import '../models/dms_result.dart';
 import '../services/dms_engine.dart';
 
-class DmsController extends GetxController {
+class DmsNotifier extends ChangeNotifier {
   CameraController? cameraController;
   CameraDescription? _camera;
-  final RxBool isCameraReady = false.obs;
-  final RxString cameraError = ''.obs;
+  bool isCameraReady = false;
+  String cameraError = '';
 
   final AudioPlayer _audioPlayer = AudioPlayer();
-  final RxBool isAlarmPlaying = false.obs;
+  bool isAlarmPlaying = false;
 
-  final Rx<DmsResult> currentResult = DmsResult.normal().obs;
+  DmsResult currentResult = DmsResult.normal();
 
   late final DmsEngine _dmsEngine;
   bool _isProcessingFrame = false;
   int _frameCount = 0;
 
-  @override
-  void onInit() {
-    super.onInit();
+  DmsNotifier() {
     _dmsEngine = DmsEngine();
     // Initialise the custom TFLite model FIRST, then start the camera
     _dmsEngine.init().then((_) => _initCamera());
@@ -34,7 +31,8 @@ class DmsController extends GetxController {
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
-        cameraError.value = "No cameras found on this device";
+        cameraError = "No cameras found on this device";
+        notifyListeners();
         return;
       }
       
@@ -53,14 +51,16 @@ class DmsController extends GetxController {
       );
 
       await cameraController!.initialize();
-      isCameraReady.value = true;
+      isCameraReady = true;
+      notifyListeners();
 
       cameraController!.startImageStream((image) {
         _processFrame(image);
       });
     } catch (e) {
       debugPrint("Camera init error: $e");
-      cameraError.value = e.toString();
+      cameraError = e.toString();
+      notifyListeners();
     }
   }
 
@@ -84,8 +84,9 @@ class DmsController extends GetxController {
       final result = await _dmsEngine.processFrame(inputImage);
       
       // Si la alarma NO está sonando, actualizamos la pantalla con lo que diga la IA
-      if (!isAlarmPlaying.value) {
-        currentResult.value = result;
+      if (!isAlarmPlaying) {
+        currentResult = result;
+        notifyListeners();
 
         // Alarm when the engine reports critical events:
         // - Drowsiness (eyes closed > 1.3s)
@@ -104,35 +105,37 @@ class DmsController extends GetxController {
   }
 
   @override
-  void onClose() {
+  void dispose() {
     cameraController?.dispose();
     _dmsEngine.dispose();
     _audioPlayer.dispose();
-    super.onClose();
+    super.dispose();
   }
 
-void playAlarma() async {
-    if (!isAlarmPlaying.value) {
-      isAlarmPlaying.value = true;
+  void playAlarma() async {
+    if (!isAlarmPlaying) {
+      isAlarmPlaying = true;
+      notifyListeners();
       try {
         await _audioPlayer.setReleaseMode(ReleaseMode.loop);
         await _audioPlayer.play(AssetSource('alarma.wav')); 
       } catch (e) {
-        print("Error al reproducir audio: $e");
+        debugPrint("Error al reproducir audio: $e");
         try {
           await _audioPlayer.play(AssetSource('assets/alarma.wav'));
         } catch (_) {}
       }
     }
   }
+
   void stopAlarma() async {
-    if (isAlarmPlaying.value) {
+    if (isAlarmPlaying) {
       await _audioPlayer.stop();
-      isAlarmPlaying.value = false;
+      isAlarmPlaying = false;
       
       // Reseteamos el estado a normal para que la IA pueda volver a evaluar tus ojos de nuevo
-      currentResult.value = DmsResult.normal();
-      currentResult.refresh();
+      currentResult = DmsResult.normal();
+      notifyListeners();
     }
   }
 }
