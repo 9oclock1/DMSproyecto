@@ -11,82 +11,92 @@ import 'package:path/path.dart' as p;
 
 import '../models/dms_result.dart';
 
-// ── Custom TFLite model asset name ──
 const String _kModelAsset = 'assets/models/best_float16.tflite';
 
 class DmsEngine {
   late final FaceDetector _faceDetector;
   ObjectDetector? _objectDetector;
 
-  // ── Timing state (mirrors server.py logic) ──
   double _tiempoOjosCerrados = 0;
   double _tiempoBostezo = 0;
   double _tiempoCabeceo = 0;
-  double _tiempoFumando = 0;     // smoking timer
-  double _tiempoComiendo = 0;    // eating/drinking timer
-  double _tiempoTelefono = 0;    // phone timer
+  double _tiempoFumando = 0;
+  double _tiempoComiendo = 0;
+  double _tiempoTelefono = 0;
   int _frameCount = 0;
   String? _alertaObjActual;
-  // Seatbelt: we track whether belt was seen in recent frames
   bool _cinturonVisto = false;
-  int _framesSinCinturon = 0;    // consecutive detection-frames without seatbelt
-  static const int _maxFramesSinCinturon = 30; // ~3 s at 10 fps obj detection
+  int _framesSinCinturon = 0;
+  static const int _maxFramesSinCinturon = 30;
 
-  // ── Thresholds (matching server.py) ──
-  /// Eye-open probability below this → eyes considered closed.
-  /// Equivalent to EAR < 0.22 in the Python version.
   static const double _umbralEyeOpen = 0.3;
 
-  /// Mouth Aspect Ratio above this → yawning.
   static const double _umbralMar = 0.65;
 
-  /// Head pitch above this → nodding/head down.
   static const double _umbralPitch = 25.0;
 
-  /// Object detection runs every N processed frames (same as YOLO skip in server.py).
   static const int _saltoFramesObj = 10;
 
-  // ── Alert colors ──
   static const _colorNormal = Color(0xFF43A047);
   static const _colorDanger = Color(0xFFE53935);
   static const _colorWarning = Color(0xFFFB8C00);
 
-  // ── Class labels that best_float16.tflite detects ──
-  // Tier 1 – Phone/device distraction (critical)
   static const _phoneLabels = {
-    'cell phone', 'phone', 'mobile phone', 'celular',
-    'laptop', 'tablet',
+    'cell phone',
+    'phone',
+    'mobile phone',
+    'celular',
+    'laptop',
+    'tablet',
   };
-  // Tier 2 – Smoking (critical)
   static const _smokingLabels = {
-    'cigarette', 'cigar', 'smoking', 'cigarro', 'vape', 'e-cigarette',
+    'cigarette',
+    'cigar',
+    'smoking',
+    'cigarro',
+    'vape',
+    'e-cigarette',
   };
-  // Tier 3 – Eating or drinking (warning)
   static const _foodLabels = {
-    'cup', 'bottle', 'wine glass', 'fork', 'knife',
-    'spoon', 'bowl', 'food', 'bebida', 'sandwich',
-    'pizza', 'hamburger', 'hot dog', 'donut', 'cake',
-    'apple', 'orange', 'banana', 'carrot', 'broccoli',
+    'cup',
+    'bottle',
+    'wine glass',
+    'fork',
+    'knife',
+    'spoon',
+    'bowl',
+    'food',
+    'bebida',
+    'sandwich',
+    'pizza',
+    'hamburger',
+    'hot dog',
+    'donut',
+    'cake',
+    'apple',
+    'orange',
+    'banana',
+    'carrot',
+    'broccoli',
   };
-  // Tier 4 – Seatbelt present (we alert when NOT seen)
   static const _seatbeltLabels = {
-    'seatbelt', 'seat belt', 'cinturon', 'cinturón', 'belt',
+    'seatbelt',
+    'seat belt',
+    'cinturon',
+    'cinturón',
+    'belt',
   };
 
   DmsEngine() {
     _faceDetector = FaceDetector(
       options: FaceDetectorOptions(
-        enableContours: true, // needed for MAR computation
-        enableClassification: true, // needed for eye-open probability
+        enableContours: true,
+        enableClassification: true,
         performanceMode: FaceDetectorMode.fast,
       ),
     );
-    // ObjectDetector is initialized asynchronously via init()
   }
 
-  /// Must be called once before processing frames.
-  /// Extracts the bundled .tflite asset to the device filesystem and
-  /// initialises the custom object detector.
   Future<void> init() async {
     final modelPath = await _extractModelAsset();
     _objectDetector = ObjectDetector(
@@ -102,8 +112,6 @@ class DmsEngine {
     debugPrint('[DmsEngine] Custom model loaded from: $modelPath');
   }
 
-  /// Copies the .tflite Flutter asset to the device's documents directory
-  /// so ML Kit can open it as a regular file.
   Future<String> _extractModelAsset() async {
     final dir = await getApplicationDocumentsDirectory();
     final modelFile = File(p.join(dir.path, 'best_float16.tflite'));
@@ -123,14 +131,6 @@ class DmsEngine {
     return modelFile.path;
   }
 
-  // ═══════════════════════════════════════════════════════
-  //  Camera → InputImage conversion
-  // ═══════════════════════════════════════════════════════
-
-  /// Converts a [CameraImage] to an ML Kit [InputImage].
-  ///
-  /// - Android: expects NV21 format (single plane).
-  /// - iOS: expects BGRA8888 format (single plane).
   InputImage? convertCameraImage(CameraImage image, CameraDescription camera) {
     final rotation = InputImageRotationValue.fromRawValue(
       camera.sensorOrientation,
@@ -160,12 +160,6 @@ class DmsEngine {
     );
   }
 
-  // ═══════════════════════════════════════════════════════
-  //  Main frame processing
-  // ═══════════════════════════════════════════════════════
-
-  /// Processes a single frame and returns a [DmsResult].
-  /// This is the on-device equivalent of `DmsSession.process_frame()` in server.py.
   Future<DmsResult> processFrame(InputImage inputImage) async {
     _frameCount++;
 
@@ -208,7 +202,8 @@ class DmsEngine {
             }
 
             // ── Smoking ──
-            if (_smokingLabels.contains(labelLower) && _alertaObjActual == null) {
+            if (_smokingLabels.contains(labelLower) &&
+                _alertaObjActual == null) {
               final now = _nowSeconds();
               if (_tiempoFumando == 0) _tiempoFumando = now;
               if (now - _tiempoFumando > 1.0) {
@@ -316,7 +311,8 @@ class DmsEngine {
     } else if (_alertaObjActual != null) {
       estadoAlerta = _alertaObjActual!;
       // Smoking and phone = danger; eating = warning
-      colorAlerta = (_alertaObjActual!.contains('FUMANDO') ||
+      colorAlerta =
+          (_alertaObjActual!.contains('FUMANDO') ||
               _alertaObjActual!.contains('TELEFONO'))
           ? _colorDanger
           : _colorWarning;

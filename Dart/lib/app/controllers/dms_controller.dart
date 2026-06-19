@@ -23,7 +23,6 @@ class DmsNotifier extends ChangeNotifier {
 
   DmsNotifier() {
     _dmsEngine = DmsEngine();
-    // Initialise the custom TFLite model FIRST, then start the camera
     _dmsEngine.init().then((_) => _initCamera());
   }
 
@@ -35,7 +34,7 @@ class DmsNotifier extends ChangeNotifier {
         notifyListeners();
         return;
       }
-      
+
       _camera = cameras.firstWhere(
         (c) => c.lensDirection == CameraLensDirection.front,
         orElse: () => cameras.first,
@@ -82,7 +81,7 @@ class DmsNotifier extends ChangeNotifier {
       if (inputImage == null) return;
 
       final result = await _dmsEngine.processFrame(inputImage);
-      
+
       // Si la alarma NO está sonando, actualizamos la pantalla con lo que diga la IA
       if (!isAlarmPlaying) {
         currentResult = result;
@@ -118,7 +117,7 @@ class DmsNotifier extends ChangeNotifier {
       notifyListeners();
       try {
         await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-        await _audioPlayer.play(AssetSource('alarma.wav')); 
+        await _audioPlayer.play(AssetSource('alarma.wav'));
       } catch (e) {
         debugPrint("Error al reproducir audio: $e");
         try {
@@ -132,7 +131,7 @@ class DmsNotifier extends ChangeNotifier {
     if (isAlarmPlaying) {
       await _audioPlayer.stop();
       isAlarmPlaying = false;
-      
+
       // Reseteamos el estado a normal para que la IA pueda volver a evaluar tus ojos de nuevo
       currentResult = DmsResult.normal();
       notifyListeners();

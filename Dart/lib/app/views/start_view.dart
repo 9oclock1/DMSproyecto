@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/constants.dart';
 import 'monitor_view.dart';
 
-// ── View: ConsumerStatefulWidget — animations live in State ─────────────────
 class StartView extends ConsumerStatefulWidget {
   const StartView({super.key});
 
@@ -51,9 +50,9 @@ class _StartViewState extends ConsumerState<StartView>
   }
 
   void _startDms() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const MonitorView()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const MonitorView()));
   }
 
   @override
@@ -66,11 +65,7 @@ class _StartViewState extends ConsumerState<StartView>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0D0D1A),
-              Color(0xFF121228),
-              Color(0xFF0A1628),
-            ],
+            colors: [Color(0xFF0D0D1A), Color(0xFF121228), Color(0xFF0A1628)],
           ),
         ),
         child: SafeArea(
@@ -136,7 +131,9 @@ class _StartViewState extends ConsumerState<StartView>
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Constants.primaryColor.withValues(alpha: 0.4),
+                                color: Constants.primaryColor.withValues(
+                                  alpha: 0.4,
+                                ),
                                 blurRadius: 30,
                                 spreadRadius: 5,
                               ),
@@ -192,26 +189,39 @@ class _StartViewState extends ConsumerState<StartView>
 
                         // On-device badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: const Color(0xFF03DAC6).withValues(alpha: 0.4),
+                              color: const Color(
+                                0xFF03DAC6,
+                              ).withValues(alpha: 0.4),
                             ),
-                            color: const Color(0xFF03DAC6).withValues(alpha: 0.08),
+                            color: const Color(
+                              0xFF03DAC6,
+                            ).withValues(alpha: 0.08),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.phone_android,
-                                  size: 14,
-                                  color: const Color(0xFF03DAC6).withValues(alpha: 0.8)),
+                              Icon(
+                                Icons.phone_android,
+                                size: 14,
+                                color: const Color(
+                                  0xFF03DAC6,
+                                ).withValues(alpha: 0.8),
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 'Procesamiento 100% en dispositivo',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: const Color(0xFF03DAC6).withValues(alpha: 0.8),
+                                  color: const Color(
+                                    0xFF03DAC6,
+                                  ).withValues(alpha: 0.8),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -234,7 +244,9 @@ class _StartViewState extends ConsumerState<StartView>
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Constants.primaryColor.withValues(alpha: 0.5),
+                                  color: Constants.primaryColor.withValues(
+                                    alpha: 0.5,
+                                  ),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
@@ -252,8 +264,11 @@ class _StartViewState extends ConsumerState<StartView>
                               child: const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.play_arrow_rounded,
-                                      color: Colors.white, size: 28),
+                                  Icon(
+                                    Icons.play_arrow_rounded,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
                                   SizedBox(width: 10),
                                   Text(
                                     'INICIAR DMS',

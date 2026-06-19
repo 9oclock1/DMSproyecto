@@ -7,7 +7,6 @@ class DmsMenuView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Colores premium para el diseño automotriz (Dark Mode)
     const primaryColor = Color(0xFF1E1E2E);
     const accentColor = Colors.cyanAccent;
     const cardColor = Color(0xFF2A2A40);
@@ -20,7 +19,6 @@ class DmsMenuView extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Encabezado de la App
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -54,7 +52,11 @@ class DmsMenuView extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.white10),
                     ),
-                    child: const Icon(Icons.shield, color: accentColor, size: 28),
+                    child: const Icon(
+                      Icons.shield,
+                      color: accentColor,
+                      size: 28,
+                    ),
                   ),
                 ],
               ),
@@ -62,9 +64,9 @@ class DmsMenuView extends ConsumerWidget {
 
               // 2. Botón Principal: INICIAR ESCANEO
               GestureDetector(
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const MonitorView()),
-                ),
+                onTap: () => Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const MonitorView())),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
@@ -80,7 +82,7 @@ class DmsMenuView extends ConsumerWidget {
                         color: const Color(0xFF6C63FF).withOpacity(0.4),
                         blurRadius: 15,
                         offset: const Offset(0, 8),
-                      )
+                      ),
                     ],
                   ),
                   child: Row(
@@ -91,7 +93,11 @@ class DmsMenuView extends ConsumerWidget {
                           color: Colors.white24,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.center_focus_strong, color: Colors.white, size: 30),
+                        child: const Icon(
+                          Icons.center_focus_strong,
+                          color: Colors.white,
+                          size: 30,
+                        ),
                       ),
                       const SizedBox(width: 20),
                       Expanded(
@@ -110,19 +116,25 @@ class DmsMenuView extends ConsumerWidget {
                             const SizedBox(height: 4),
                             const Text(
                               "Activar cámara e IA en tiempo real",
-                              style: TextStyle(color: Colors.white70, fontSize: 13),
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 35),
 
-              // 3. SECCIÓN: "El Porqué del Proyecto"
               const Text(
                 "PROPÓSITO DEL PROYECTO",
                 style: TextStyle(
@@ -146,11 +158,19 @@ class DmsMenuView extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.analytics_outlined, color: accentColor, size: 22),
+                        Icon(
+                          Icons.analytics_outlined,
+                          color: accentColor,
+                          size: 22,
+                        ),
                         SizedBox(width: 10),
                         Text(
                           "Prevención Inteligente",
-                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -161,7 +181,11 @@ class DmsMenuView extends ConsumerWidget {
                       "para medir el nivel de apertura ocular (EAR) y gesticulación bucal (MAR).\n\n"
                       "Ante cualquier signo crítico de fatiga, somnolencia o distracción prolongada, el sistema emite una alerta auditiva restrictiva "
                       "que obliga al conductor a reaccionar para salvaguardar su vida.",
-                      style: TextStyle(color: Colors.white60, fontSize: 13, height: 1.5),
+                      style: TextStyle(
+                        color: Colors.white60,
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),
@@ -190,7 +214,7 @@ class DmsMenuView extends ConsumerWidget {
                   ),
                   const SizedBox(width: 16),
                   _buildFeatureCard(
-                    icon: Icons.face, 
+                    icon: Icons.face,
                     title: "Detector MAR",
                     desc: "Identificación de bostezos frecuentes.",
                     accentColor: Colors.purpleAccent,
@@ -204,7 +228,11 @@ class DmsMenuView extends ConsumerWidget {
               const Center(
                 child: Text(
                   "Desarrollado para Ingeniería • v1.0.0",
-                  style: TextStyle(color: Colors.white24, fontSize: 11, letterSpacing: 1.0),
+                  style: TextStyle(
+                    color: Colors.white24,
+                    fontSize: 11,
+                    letterSpacing: 1.0,
+                  ),
                 ),
               ),
             ],
@@ -236,12 +264,20 @@ class DmsMenuView extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(
               title,
-              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               desc,
-              style: const TextStyle(color: Colors.white38, fontSize: 11, height: 1.3),
+              style: const TextStyle(
+                color: Colors.white38,
+                fontSize: 11,
+                height: 1.3,
+              ),
             ),
           ],
         ),

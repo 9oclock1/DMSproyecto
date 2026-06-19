@@ -16,7 +16,6 @@ class MonitorView extends ConsumerWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 1. Capa de fondo: Previsualización de la cámara
           Builder(
             builder: (_) {
               if (controller.cameraError.isNotEmpty) {
@@ -99,7 +98,6 @@ class MonitorView extends ConsumerWidget {
             ),
           ),
 
-          // 3. Capa Dinámica: Slider inteligente para deslindar/apagar la alarma
           if (controller.isAlarmPlaying)
             Positioned(
               bottom: 140,
@@ -170,16 +168,12 @@ class MonitorView extends ConsumerWidget {
                 ),
               ),
             ),
-
-          // 4. Capa inferior: Banner de alertas (Fatiga, Distracción, Normal)
           const Positioned(
             bottom: 50,
             left: 20,
             right: 20,
             child: AlertBanner(),
           ),
-
-          // 5. Capa superior derecha: Botón flotante para salir/volver atrás (Estilizado)
           Positioned(
             top: 45,
             right: 20,
