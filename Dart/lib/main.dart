@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pro_mov/app/utils/constants.dart';
 import 'package:pro_mov/app/views/dms_menu_view.dart';
 
 void main() {
@@ -16,13 +17,15 @@ class DmsApp extends StatelessWidget {
       title: 'DMS Híbrido',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF1E88E5),
-          secondary: Color(0xFF03DAC6),
+        scaffoldBackgroundColor: Constants.background,
+        colorScheme: ColorScheme.dark(
+          primary: Constants.accent,
+          secondary: Constants.textSecondary,
+          surface: Constants.surface,
         ),
       ),
       home: const DmsMenuView(),
     );
   }
 }
+

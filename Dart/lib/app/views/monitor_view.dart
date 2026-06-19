@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:camera/camera.dart';
 import '../providers/providers.dart';
+import '../utils/constants.dart';
 import 'widgets/alert_banner.dart';
 import 'widgets/metrics_panel.dart';
+import 'widgets/lodging_tab.dart';
 
 class MonitorView extends ConsumerWidget {
   const MonitorView({super.key});
@@ -26,7 +28,7 @@ class MonitorView extends ConsumerWidget {
                       "Error con la cámara:\n${controller.cameraError}",
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        color: Colors.redAccent,
+                        color: Constants.dangerColor,
                         fontSize: 16,
                       ),
                     ),
@@ -35,8 +37,8 @@ class MonitorView extends ConsumerWidget {
               }
               if (!controller.isCameraReady ||
                   controller.cameraController == null) {
-                return const Center(
-                  child: CircularProgressIndicator(color: Colors.cyanAccent),
+                return Center(
+                  child: CircularProgressIndicator(color: Constants.accent),
                 );
               }
               return CameraPreview(controller.cameraController!);
@@ -47,31 +49,28 @@ class MonitorView extends ConsumerWidget {
               decoration: BoxDecoration(
                 border: Border.all(
                   color: controller.isAlarmPlaying
-                      ? Colors.redAccent.withOpacity(
-                          0.6,
-                        ) // Parpadeo rojo en emergencia
-                      : Colors.cyanAccent.withOpacity(
-                          0.15,
-                        ), // Brillo sutil normal
+                      ? Constants.dangerColor.withValues(alpha: 0.6)
+                      : Constants.accent.withValues(alpha: 0.15),
                   width: controller.isAlarmPlaying ? 6 : 3,
                 ),
               ),
             ),
           ),
 
-          // 2. Capa superior izquierda: Panel de métricas (EAR / MAR)
+          // 2. Panel de métricas (EAR / MAR)
           const Positioned(top: 50, left: 20, child: MetricsPanel()),
 
-          // 🔥 DETALLE PREMIUM 2: Indicador "IA ACTIVA" arriba a la derecha (Estilo Tesla)
+          // Indicador "IA ACTIVA"
           Positioned(
             top: 55,
-            right: 70, // Espacio para que no choque con el botón de cerrar
+            right: 70,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.black54,
+                color: Constants.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white10),
+                border: Border.all(color: Constants.border),
               ),
               child: Row(
                 children: [
@@ -79,7 +78,7 @@ class MonitorView extends ConsumerWidget {
                     width: 7,
                     height: 7,
                     decoration: const BoxDecoration(
-                      color: Colors.redAccent,
+                      color: Constants.successColor,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -87,7 +86,7 @@ class MonitorView extends ConsumerWidget {
                   const Text(
                     "IA ACTIVA",
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Constants.textPrimary,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.8,
@@ -112,7 +111,7 @@ class MonitorView extends ConsumerWidget {
                 background: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   decoration: BoxDecoration(
-                    color: Colors.greenAccent.shade700.withOpacity(0.8),
+                    color: Constants.successColor,
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: const Align(
@@ -124,15 +123,8 @@ class MonitorView extends ConsumerWidget {
                   width: double.infinity,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.95),
+                    color: Constants.dangerColor,
                     borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
                   ),
                   child: Row(
                     children: [
@@ -146,7 +138,7 @@ class MonitorView extends ConsumerWidget {
                         ),
                         child: const Icon(
                           Icons.arrow_forward,
-                          color: Colors.redAccent,
+                          color: Constants.dangerColor,
                           size: 26,
                         ),
                       ),
@@ -174,16 +166,29 @@ class MonitorView extends ConsumerWidget {
             right: 20,
             child: AlertBanner(),
           ),
+
+          // ── Lodging tab: visible only during red alert ──
+          if (controller.isAlarmPlaying)
+            const Positioned(
+              bottom: 220,
+              right: 16,
+              child: LodgingTab(),
+            ),
+
           Positioned(
             top: 45,
             right: 20,
             child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.black38,
+              decoration: BoxDecoration(
+                color: Constants.surface,
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white, size: 26),
+                icon: const Icon(
+                  Icons.close,
+                  color: Constants.textPrimary,
+                  size: 26,
+                ),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),

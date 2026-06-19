@@ -17,13 +17,6 @@ class AlertBanner extends ConsumerWidget {
       decoration: BoxDecoration(
         color: result.color.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: result.color.withValues(alpha: 0.5),
-            blurRadius: 10,
-            spreadRadius: 2,
-          )
-        ],
       ),
       child: Text(
         result.status,

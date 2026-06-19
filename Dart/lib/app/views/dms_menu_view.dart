@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../utils/constants.dart';
 import 'monitor_view.dart';
 
 class DmsMenuView extends ConsumerWidget {
@@ -7,12 +8,8 @@ class DmsMenuView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    const primaryColor = Color(0xFF1E1E2E);
-    const accentColor = Colors.cyanAccent;
-    const cardColor = Color(0xFF2A2A40);
-
     return Scaffold(
-      backgroundColor: primaryColor,
+      backgroundColor: Constants.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
@@ -28,7 +25,7 @@ class DmsMenuView extends ConsumerWidget {
                       Text(
                         "SISTEMA DMS",
                         style: TextStyle(
-                          color: accentColor.withOpacity(0.8),
+                          color: Constants.accent,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 2.0,
@@ -38,7 +35,7 @@ class DmsMenuView extends ConsumerWidget {
                       const Text(
                         "Panel de Control",
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Constants.textPrimary,
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
@@ -48,13 +45,13 @@ class DmsMenuView extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: cardColor,
+                      color: Constants.surface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white10),
+                      border: Border.all(color: Constants.border),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.shield,
-                      color: accentColor,
+                      color: Constants.accent,
                       size: 28,
                     ),
                   ),
@@ -62,7 +59,7 @@ class DmsMenuView extends ConsumerWidget {
               ),
               const SizedBox(height: 30),
 
-              // 2. Botón Principal: INICIAR ESCANEO
+              // ── Botón Principal: INICIAR MONITOREO (solid, no gradient) ──
               GestureDetector(
                 onTap: () => Navigator.of(
                   context,
@@ -71,26 +68,15 @@ class DmsMenuView extends ConsumerWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF6C63FF), Color(0xFF3F3D56)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: Constants.accent,
                     borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF6C63FF).withOpacity(0.4),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
                   ),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(12),
-                        decoration: const BoxDecoration(
-                          color: Colors.white24,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -100,11 +86,11 @@ class DmsMenuView extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 20),
-                      Expanded(
+                      const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               "INICIAR MONITOREO",
                               style: TextStyle(
                                 color: Colors.white,
@@ -113,8 +99,8 @@ class DmsMenuView extends ConsumerWidget {
                                 letterSpacing: 1.0,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            const Text(
+                            SizedBox(height: 4),
+                            Text(
                               "Activar cámara e IA en tiempo real",
                               style: TextStyle(
                                 color: Colors.white70,
@@ -138,7 +124,7 @@ class DmsMenuView extends ConsumerWidget {
               const Text(
                 "PROPÓSITO DEL PROYECTO",
                 style: TextStyle(
-                  color: Colors.white70,
+                  color: Constants.textSecondary,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.5,
@@ -149,40 +135,40 @@ class DmsMenuView extends ConsumerWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: cardColor,
+                  color: Constants.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                  border: Border.all(color: Constants.border),
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
                         Icon(
                           Icons.analytics_outlined,
-                          color: accentColor,
+                          color: Constants.accent,
                           size: 22,
                         ),
-                        SizedBox(width: 10),
-                        Text(
+                        const SizedBox(width: 10),
+                        const Text(
                           "Prevención Inteligente",
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Constants.textPrimary,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 12),
-                    Text(
+                    const SizedBox(height: 12),
+                    const Text(
                       "Este sistema DMS (Driver Monitoring System) fue diseñado para mitigar los riesgos viales causados por el factor humano. "
                       "Utilizando algoritmos avanzados de Visión Artificial, el software analiza los vectores del rostro del conductor "
                       "para medir el nivel de apertura ocular (EAR) y gesticulación bucal (MAR).\n\n"
                       "Ante cualquier signo crítico de fatiga, somnolencia o distracción prolongada, el sistema emite una alerta auditiva restrictiva "
                       "que obliga al conductor a reaccionar para salvaguardar su vida.",
                       style: TextStyle(
-                        color: Colors.white60,
+                        color: Constants.textSecondary,
                         fontSize: 13,
                         height: 1.5,
                       ),
@@ -192,11 +178,11 @@ class DmsMenuView extends ConsumerWidget {
               ),
               const SizedBox(height: 30),
 
-              // 4. SECCIÓN: Características del Sistema
+              // ── MÓDULOS DE SEGURIDAD ──
               const Text(
                 "MÓDULOS DE SEGURIDAD",
                 style: TextStyle(
-                  color: Colors.white70,
+                  color: Constants.textSecondary,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.5,
@@ -209,27 +195,25 @@ class DmsMenuView extends ConsumerWidget {
                     icon: Icons.remove_red_eye,
                     title: "Detector EAR",
                     desc: "Análisis de parpadeo y ojos cerrados.",
-                    accentColor: accentColor,
-                    cardColor: cardColor,
+                    accentColor: Constants.accent,
                   ),
                   const SizedBox(width: 16),
                   _buildFeatureCard(
                     icon: Icons.face,
                     title: "Detector MAR",
                     desc: "Identificación de bostezos frecuentes.",
-                    accentColor: Colors.purpleAccent,
-                    cardColor: cardColor,
+                    accentColor: const Color(0xFF9575CD),
                   ),
                 ],
               ),
               const SizedBox(height: 40),
 
-              // Pie de página elegante
+              // Pie de página
               const Center(
                 child: Text(
                   "Desarrollado para Ingeniería • v1.0.0",
                   style: TextStyle(
-                    color: Colors.white24,
+                    color: Constants.textTertiary,
                     fontSize: 11,
                     letterSpacing: 1.0,
                   ),
@@ -247,15 +231,14 @@ class DmsMenuView extends ConsumerWidget {
     required String title,
     required String desc,
     required Color accentColor,
-    required Color cardColor,
   }) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: cardColor,
+          color: Constants.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          border: Border.all(color: Constants.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,7 +248,7 @@ class DmsMenuView extends ConsumerWidget {
             Text(
               title,
               style: const TextStyle(
-                color: Colors.white,
+                color: Constants.textPrimary,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
@@ -274,7 +257,7 @@ class DmsMenuView extends ConsumerWidget {
             Text(
               desc,
               style: const TextStyle(
-                color: Colors.white38,
+                color: Constants.textSecondary,
                 fontSize: 11,
                 height: 1.3,
               ),
